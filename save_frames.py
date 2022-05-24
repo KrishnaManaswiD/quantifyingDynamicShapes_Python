@@ -10,6 +10,7 @@
 # Soft Robotics. 6(6), pp.733-744. 2019
 
 import os
+import cv2
 
 ## construct subfolder to save frames from movie
 folderForFrames = 'frames'
@@ -22,10 +23,18 @@ if not os.path.exists(subFolder):
     os.makedirs(subFolder)
 
 ## save frames from a video
-#v = VideoReader(strcat(recordingName, '.mp4'))
-#frameNum = 0
+v = cv2.VideoCapture(recordingName + '.mp4')
+frameNum = 0
 
-#while hasFrame(v):
-#    img_frame = readFrame(v)
-#    frameNum=frameNum+1
-#    imwrite(img_frame,[subFolder, '\', 'frame', int2str(frameNum), '.png'])
+while v.isOpened():
+    ret, frame = v.read()
+
+    if ret == True:
+        frameNum += 1
+        cv2.imwrite(os.path.join(subfolder + '/' + frameNum), frame)
+    else:
+        break
+end
+
+v.release()
+cv2.destroyAllWindows()
