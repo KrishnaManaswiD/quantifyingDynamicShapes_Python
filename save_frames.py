@@ -16,18 +16,16 @@ folderForFrames = 'frames'
 recordingName = 'movie'           
 
 ## create sub folder
-subFolderPath = folderForFrames, '/', recordingName;
+subFolder = folderForFrames + '/' + recordingName
 
-if ~exist(subFolder, 'dir')
-   mkdir(subFolder); 
-end
+if not os.path.exists(subFolder):
+    os.makedirs(subFolder)
 
-%% save frames from a video
-v = VideoReader(strcat(recordingName, '.mp4'));
-frameNum = 0;
+## save frames from a video
+#v = VideoReader(strcat(recordingName, '.mp4'))
+#frameNum = 0
 
-while hasFrame(v)  
-    img_frame = readFrame(v);
-    frameNum=frameNum+1;
-    imwrite(img_frame,[subFolder, '\', 'frame', int2str(frameNum), '.png']);
-end
+#while hasFrame(v):
+#    img_frame = readFrame(v)
+#    frameNum=frameNum+1
+#    imwrite(img_frame,[subFolder, '\', 'frame', int2str(frameNum), '.png'])
