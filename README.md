@@ -3,13 +3,13 @@
 # A method to quantify deforming shapes using elliptic Fourier descriptors, dimensionality reduction and PCA
 This is a simplified working example to perform an analysis of shapes as described in  
 **Quantifying Dynamic Shapes in Soft Morphologies**  
-Digumarti, K.M., Trimmer, B., Conn, A.T. and Rossiter, J., 2019. Soft Robotics, 6(6), pp.733-744.  
+Digumarti KM, Trimmer B, Conn AT, Rossiter J. Soft Robotics. 2019 Dec 1;6(6):733-44.  
 https://www.liebertpub.com/doi/full/10.1089/soro.2018.0105  
 I would appreciate it if you cite this in your work.
 
 # How to use the code  
-A movie of a morphing blob is provided to try out the analysis.  
-First, use the **save_frames.m** script to extract frames from the video and save them locally.
+A movie of a morphing blob is provided to try out the analysis. See **movie.mp4**.  
+First, use the **save_frames.py** script to extract frames from the video and save them locally.
 
 The repository has three main files that you want to play with, in this order:
 1. **describe_shapes.m** - reads a B/W image (or a set of images) and computes elliptic Fourier descriptors in terms of coefficients of harmonics
