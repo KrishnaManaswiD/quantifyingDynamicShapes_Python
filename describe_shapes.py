@@ -12,6 +12,7 @@
 
 from json.tool import main
 import os
+from turtle import st
 from typing import List
 import cv2
 import numpy
@@ -103,7 +104,7 @@ def calc_change_in_projections(chainCode):
     sum_Dx = 0
     sum_Dy = 0
     
-    p = [[0,0]] * len(chainCode)
+    p = [[0,0] for _ in range(len(chainCode))]
     
     for i in range(0, len(chainCode)):
         sum_Dx = sum_Dx + numpy.sign(6 - chainCode[i]) * numpy.sign(2 - chainCode[i])
@@ -180,7 +181,7 @@ def fourier_approx(chainCode, nHarmonics, shouldNormalize):
     c = [0] * nHarmonics
     d = [0] * nHarmonics
 
-    for i in range(1,nHarmonics):       # loop over each harmonic
+    for i in range(1,nHarmonics+1):       # loop over each harmonic
         harmonic_coeff = calc_harmonic_coefficients(chainCode, i)
         a[i-1] = harmonic_coeff[0]
         b[i-1] = harmonic_coeff[1]
@@ -217,7 +218,7 @@ def fourier_approx(chainCode, nHarmonics, shouldNormalize):
         
         for i in range(0,nHarmonics):
             m1 = [[cospsi1, sinpsi1], [-sinpsi1, cospsi1]]
-            m2 = [[a(i), b(i)], [c(i), d(i)]] 
+            m2 = [[a[i], b[i]], [c[i], d[i]]] 
             m3 = [[math.cos(theta1 * i), -math.sin(theta1 * i)], [math.sin(theta1 * i), math.cos(theta1 * i)]]
             product = numpy.dot(m1, m2)
             product = numpy.dot(product, m3)
@@ -243,6 +244,7 @@ if __name__=="__main__":
 
     shouldNormalize = 0 # 1 = yes / 0 = no: use 0 for visualization, 1 for pca
     shouldVisualize = 1 # 1 = yes / 0 = no: to visualised estimated contour
+    shouldNormalize = 0 if shouldVisualize == 1 else shouldNormalize
     # Note: only normalised coefficients are used in pca. 
     # To speed up processing, avoid visualisation when computing coefficients 
     # for further analysis. Set shouldNormalize to 1 and shouldVisualize to 0
@@ -277,10 +279,7 @@ if __name__=="__main__":
                 contourLength = len(cnt)
                 longestContour = numpy.squeeze(cnt, axis=1)
 
-        # cv2.drawContours(img, [longestContour], 0, contourColor, lineWidth)
-
-        # cv2.imshow('img', img)
-        # cv2.waitKey(0)
+        startingPoint = longestContour[0]
 
         # assign the Freeman chain code
         chainCode = []
@@ -308,46 +307,50 @@ if __name__=="__main__":
         
         # get harmonic coefficients
         coefficients = fourier_approx(chainCode, nHarmonics, shouldNormalize)
-        print(coefficients)
-    #     A0 = coefficients(1,1);
-    #     C0 = coefficients(1,3);
-    #     a = coefficients(2:end,1);
-    #     b = coefficients(2:end,2);
-    #     c = coefficients(2:end,3);
-    #     d = coefficients(2:end,4);
         
-    #     # collect coefficients from each frame in a matrix
-    #     coeffs = reshape(coefficients', [1, size(coefficients,1)*size(coefficients,2)]);
-    #     coeffs_Mat = [coeffs_Mat; coeffs];
-        
-    #     # Optional - visualize the estimated contour
-    #     if shouldVisualize
-    #         # synthesize the estimated contour
-    #         coordinates = zeros(nSynthesis,2);
-    #         for j = 1 : nSynthesis
-    #             x_ = 0.0;
-    #             y_ = 0.0;
+        # collect the coefficients from each frame for saving
+        coeffs_Mat.append(coefficients)
 
-    #             for i = 1 : nHarmonics
-    #                 x_ = x_ + (a(i) * cos(2 * i * pi * j / nSynthesis) + b(i) * sin(2 * i * pi * j / nSynthesis));
-    #                 y_ = y_ + (c(i) * cos(2 * i * pi * j / nSynthesis) + d(i) * sin(2 * i * pi * j / nSynthesis));
-    #             end
+        # Optional - visualize the estimated contour
 
-    #             coordinates(j,1) = A0 + x_;
-    #             coordinates(j,2) = C0 + y_;
-    #         end
+        if shouldVisualize == 1:
+            A0 = coefficients[0][0]
+            C0 = coefficients[0][2]
+            a = [i[0] for i in coefficients]
+            a.pop(0) # 1:end, 0
+            b = [i[1] for i in coefficients]
+            b.pop(0) # 1:end, 1
+            c = [i[2] for i in coefficients]
+            c.pop(0) # 1:end, 2
+            d = [i[3] for i in coefficients]
+            d.pop(0) # 1:end, 3
 
-    #         # correct location
-    #         coordinates = coordinates + [startCol*ones(size(x_,1),1) startRow*ones(size(x_,1),1)];
+            # synthesize the estimated contour
+            coordinates = [[0,0] for _ in range(nSynthesis)]
+            for j in range(0,nSynthesis):
+                x_ = 0.0
+                y_ = 0.0
 
-    #         # Make it closed contour
-    #         contour = [coordinates; coordinates(1,1) coordinates(1,2)];
+                for i in range(0,nHarmonics):
+                    x_ = x_ + (a[i] * math.cos(2 * (i+1) * math.pi * (j+1) / nSynthesis) + b[i] * math.sin(2 * (i+1) * math.pi * (j+1) / nSynthesis))
+                    y_ = y_ + (c[i] * math.cos(2 * (i+1) * math.pi * (j+1) / nSynthesis) + d[i] * math.sin(2 * (i+1) * math.pi * (j+1) / nSynthesis))
 
-    #         # draw the synthesized contour
-    #         figure(1)
-    #         plot(contour(:,1), contour(:,2), 'color', color, 'linewidth', lineWidth);
-    #         drawnow
-    #     end
+                coordinates[j][0] = A0 + x_
+                coordinates[j][1] = C0 + y_
+
+            # correct location
+            for i,c in enumerate(coordinates):
+                coordinates[i][0] += startingPoint[0]
+                coordinates[i][1] += startingPoint[1]
+            
+            # Make it closed contour
+            estimatedContour = numpy.array(coordinates)
+            numpy.append(estimatedContour, [coordinates[0][0],coordinates[0][1]])
+
+            # draw the synthesized contour
+            cv2.drawContours(img, [estimatedContour.astype(int)], 0, contourColor, lineWidth)
+            cv2.imshow('img', img)
+            cv2.waitKey(0)
 
     # # save coefficients - Note: only normalized coefficients are used in pca
     # if shouldNormalize
