@@ -242,8 +242,8 @@ if __name__=="__main__":
     nHarmonics = 3      # number of harmonics to use for estimation
     nSynthesis = 100    # num of pts to reconstruct contour from estimate
 
-    shouldNormalize = 0 # 1 = yes / 0 = no: use 0 for visualization, 1 for pca
-    shouldVisualize = 1 # 1 = yes / 0 = no: to visualised estimated contour
+    shouldNormalize = 1 # 1 = yes / 0 = no: use 0 for visualization, 1 for pca
+    shouldVisualize = 0 # 1 = yes / 0 = no: to visualised estimated contour
     shouldNormalize = 0 if shouldVisualize == 1 else shouldNormalize
     # Note: only normalised coefficients are used in pca. 
     # To speed up processing, avoid visualisation when computing coefficients 
@@ -348,11 +348,17 @@ if __name__=="__main__":
             numpy.append(estimatedContour, [coordinates[0][0],coordinates[0][1]])
 
             # draw the synthesized contour
-            cv2.drawContours(img, [estimatedContour.astype(int)], 0, contourColor, lineWidth)
-            cv2.imshow('img', img)
-            cv2.waitKey(0)
+            if shouldVisualize == 1:
+                cv2.drawContours(img, [estimatedContour.astype(int)], 0, contourColor, lineWidth)
+                cv2.imshow('img', img)
+                cv2.waitKey(0)
 
-    # # save coefficients - Note: only normalized coefficients are used in pca
-    # if shouldNormalize
-    #     save('coefficients.mat','coeffs_Mat')
-    # end
+    # save coefficients - Note: only normalized coefficients are used in pca
+    if shouldNormalize:
+        with open("coefficients.txt", "w") as f:
+            for frame in coeffs_Mat:
+                for harmonic in frame:
+                    for coefficient in harmonic:
+                        f.write((str(coefficient) + " " ))
+                    f.write("\n")
+                f.write("\n\n")
